@@ -4,6 +4,7 @@ import type { Insights } from "@/lib/ai";
 /** Plain-serializable shape that maps one-to-one onto AnalyticsBentoProps. */
 export type BentoData = {
   currency: string;
+  summary: string;
   revenue: {
     label: string;
     value: number;
@@ -48,6 +49,10 @@ const median = (values: number[]) => {
 };
 const pct = (from: number, to: number) =>
   from ? (Math.abs(to - from) / from) * 100 : 0;
+const short = (text: string, max = 160) => {
+  const clean = text.replace(/\s+/g, " ").trim();
+  return clean.length <= max ? clean : `${clean.slice(0, max - 1).trimEnd()}…`;
+};
 
 export function buildBentoData(analysis: Analysis, insights: Insights): BentoData {
   const { counts, scores, samples, desktop, mobile, resources, meta } = analysis;
@@ -87,6 +92,7 @@ export function buildBentoData(analysis: Analysis, insights: Insights): BentoDat
 
   return {
     currency: "",
+    summary: short(insights.summary),
     revenue: {
       label: "Response time",
       value: Math.round(responseMs),
@@ -99,7 +105,7 @@ export function buildBentoData(analysis: Analysis, insights: Insights): BentoDat
       label: "Load time by device",
       value: Math.round(median(desktop)),
       delta: `${pct(median(desktop), median(mobile)).toFixed(1)}%`,
-      note: insights.summary || "Desktop and mobile user agents, same URL.",
+      note: "Desktop and mobile user agents, same URL.",
       desktop: [desktop],
       mobile: [mobile],
       labels: {
